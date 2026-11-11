@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Gingham Mill — weave a check, cut it to size</title>
+<meta name="description" content="Design gingham, tattersall, windowpane and madras checks in the browser and export them as SVG, PNG, JPEG, WEBP or CSS at any size and resolution.">
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,400..800&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<header class="rail">
+  <div class="mark">
+    <svg class="mark-glyph" viewBox="0 0 24 24" aria-hidden="true">
+      <rect x="0" y="0" width="12" height="12" fill="currentColor" opacity=".28"/>
+      <rect x="12" y="0" width="12" height="12" fill="currentColor" opacity=".62"/>
+      <rect x="0" y="12" width="12" height="12" fill="currentColor" opacity=".62"/>
+      <rect x="12" y="12" width="12" height="12" fill="currentColor"/>
+    </svg>
+    <h1>Gingham Mill</h1>
+  </div>
+
+  <p class="spec" id="specLine">
+    <span class="spec-item"><em>bolt</em> <b id="specBolt">—</b></span>
+    <span class="spec-item"><em>cloth</em> <b id="specSize">—</b></span>
+    <span class="spec-item"><em>repeat</em> <b id="specRepeat">—</b></span>
+  </p>
+
+  <div class="rail-actions">
+    <div class="seg" role="group" aria-label="Measurement unit">
+      <button type="button" class="seg-btn is-on" data-unit="in">inches</button>
+      <button type="button" class="seg-btn" data-unit="cm">cm</button>
+    </div>
+    <button type="button" class="btn btn-accent" id="randomBolt" title="Shortcut: R">Pull a bolt</button>
+  </div>
+</header>
+
+<main class="mill">
+
+  <!-- ------------------------------------------------------------ controls -->
+  <aside class="controls" aria-label="Pattern controls">
+
+    <section class="panel">
+      <h2 class="panel-head"><span class="eyebrow">the cloth</span>Pattern</h2>
+      <div class="style-grid" id="styleGrid" role="radiogroup" aria-label="Pattern style"></div>
+      <p class="blurb" id="styleBlurb"></p>
+
+      <h3 class="sub-head">Sample book</h3>
+      <div class="chips" id="presetChips"></div>
+    </section>
+
+    <section class="panel">
+      <h2 class="panel-head"><span class="eyebrow">warp &amp; weft</span>Yarns</h2>
+
+      <div class="yarn" data-yarn="primary">
+        <div class="yarn-top">
+          <label class="yarn-name" for="primaryHex">Primary</label>
+          <span class="swatch-chip"><input type="color" id="primaryColor" value="#c8102e" aria-label="Primary color"></span>
+          <input type="text" class="hex" id="primaryHex" value="#c8102e" spellcheck="false" aria-label="Primary hex value">
+          <button type="button" class="ghost-btn" data-clear="primary" title="Make this yarn transparent">clear</button>
+        </div>
+        <div class="row-slider">
+          <label for="primaryAlpha">Opacity</label>
+          <input type="range" id="primaryAlpha" min="0" max="100" value="100">
+          <output class="num" id="primaryAlphaOut">100%</output>
+        </div>
+      </div>
+
+      <div class="yarn" data-yarn="secondary">
+        <div class="yarn-top">
+          <label class="yarn-name" for="secondaryHex">Secondary</label>
+          <span class="swatch-chip"><input type="color" id="secondaryColor" value="#fbf7ef" aria-label="Secondary color"></span>
+          <input type="text" class="hex" id="secondaryHex" value="#fbf7ef" spellcheck="false" aria-label="Secondary hex value">
+          <button type="button" class="ghost-btn" data-clear="secondary" title="Make this yarn transparent">clear</button>
+        </div>
+        <div class="row-slider">
+          <label for="secondaryAlpha">Opacity</label>
+          <input type="range" id="secondaryAlpha" min="0" max="100" value="100">
+          <output class="num" id="secondaryAlphaOut">100%</output>
+        </div>
+      </div>
+
+      <div class="yarn" data-yarn="accent" id="accentYarn">
+        <div class="yarn-top">
+          <label class="yarn-name" for="accentHex">Accent</label>
+          <span class="swatch-chip"><input type="color" id="accentColor" value="#1d3557" aria-label="Accent color"></span>
+          <input type="text" class="hex" id="accentHex" value="#1d3557" spellcheck="false" aria-label="Accent hex value">
+          <button type="button" class="ghost-btn" data-clear="accent" title="Make this yarn transparent">clear</button>
+        </div>
+        <div class="row-slider">
+          <label for="accentAlpha">Opacity</label>
+          <input type="range" id="accentAlpha" min="0" max="100" value="100">
+          <output class="num" id="accentAlphaOut">100%</output>
+        </div>
+      </div>
+
+      <div class="row-slider balance">
+        <label for="blend">Balance</label>
+        <input type="range" id="blend" min="0" max="100" value="50">
+        <output class="num" id="blendOut">even</output>
+      </div>
+      <p class="hint">Which set of threads shows at a crossing. Even gives you the classic three tones from two colors.</p>
+    </section>
+
+    <section class="panel">
+      <h2 class="panel-head"><span class="eyebrow">sett</span>Grid</h2>
+
+      <div class="dim-row">
+        <label for="checkX">Check width</label>
+        <div class="dim-inputs">
+          <span class="field"><input type="number" id="checkX" min="1" max="2000" step="1" value="48"><i>px</i></span>
+          <output class="derived" id="checkXOut">0.160 in</output>
+        </div>
+      </div>
+
+      <button type="button" class="link-btn is-on" id="linkChecks" aria-pressed="true">
+        <span class="link-glyph" aria-hidden="true"></span> Square checks
+      </button>
+
+      <div class="dim-row" id="checkYRow">
+        <label for="checkY">Check height</label>
+        <div class="dim-inputs">
+          <span class="field"><input type="number" id="checkY" min="1" max="2000" step="1" value="48"><i>px</i></span>
+          <output class="derived" id="checkYOut">0.160 in</output>
+        </div>
+      </div>
+
+      <div class="row-slider" id="lineRatioRow">
+        <label for="lineRatio">Line weight</label>
+        <input type="range" id="lineRatio" min="2" max="60" value="14">
+        <output class="num" id="lineRatioOut">14%</output>
+      </div>
+
+      <div class="row-slider" id="seedRow">
+        <label for="seed">Band shuffle</label>
+        <input type="range" id="seed" min="0" max="999" value="234">
+        <output class="num" id="seedOut">234</output>
+      </div>
+
+      <div class="row-slider">
+        <label for="angle">Grain angle</label>
+        <input type="range" id="angle" min="0" max="90" value="0">
+        <output class="num" id="angleOut">0°</output>
+      </div>
+      <div class="quick-row" id="angleQuick">
+        <button type="button" class="tiny" data-angle="0">straight</button>
+        <button type="button" class="tiny" data-angle="45">on the bias</button>
+        <button type="button" class="tiny" data-angle="90">crossgrain</button>
+      </div>
+
+      <div class="row-slider">
+        <label for="offsetX">Shift across</label>
+        <input type="range" id="offsetX" min="-200" max="200" value="0">
+        <output class="num" id="offsetXOut">0 px</output>
+      </div>
+      <div class="row-slider">
+        <label for="offsetY">Shift down</label>
+        <input type="range" id="offsetY" min="-200" max="200" value="0">
+        <output class="num" id="offsetYOut">0 px</output>
+      </div>
+    </section>
+
+    <section class="panel">
+      <h2 class="panel-head"><span class="eyebrow">interlacing</span>Weave</h2>
+      <div class="seg seg-wide" id="weaveSeg" role="group" aria-label="Weave structure"></div>
+      <p class="hint" id="weaveHint">Flat keeps every check a solid block — the cleanest export and the smallest file.</p>
+
+      <div class="weave-only">
+        <div class="row-slider">
+          <label for="threads">Threads per check</label>
+          <input type="range" id="threads" min="2" max="16" value="6">
+          <output class="num" id="threadsOut">6</output>
+        </div>
+        <div class="row-slider">
+          <label for="weaveDepth">Weave contrast</label>
+          <input type="range" id="weaveDepth" min="0" max="100" value="75">
+          <output class="num" id="weaveDepthOut">75%</output>
+        </div>
+        <div class="row-slider">
+          <label for="jitter">Yarn variation</label>
+          <input type="range" id="jitter" min="0" max="20" value="5">
+          <output class="num" id="jitterOut">5%</output>
+        </div>
+      </div>
+
+      <div class="row-slider">
+        <label for="grain">Grain</label>
+        <input type="range" id="grain" min="0" max="40" value="0">
+        <output class="num" id="grainOut">off</output>
+      </div>
+      <p class="hint">Grain is per-pixel noise. It exports exactly in raster formats; SVG approximates it with a turbulence filter.</p>
+    </section>
+
+    <section class="panel">
+      <h2 class="panel-head"><span class="eyebrow">the bolt</span>Cloth size</h2>
+
+      <div class="dim-row">
+        <label for="width">Width</label>
+        <div class="dim-inputs">
+          <span class="field"><input type="number" id="width" min="1" max="20000" step="1" value="1200"><i>px</i></span>
+          <span class="field"><input type="number" id="widthUnit" min="0.01" step="0.01" value="4"><i class="unit-label">in</i></span>
+        </div>
+      </div>
+
+      <div class="dim-row">
+        <label for="height">Height</label>
+        <div class="dim-inputs">
+          <span class="field"><input type="number" id="height" min="1" max="20000" step="1" value="1200"><i>px</i></span>
+          <span class="field"><input type="number" id="heightUnit" min="0.01" step="0.01" value="4"><i class="unit-label">in</i></span>
+        </div>
+      </div>
+
+      <div class="dim-row">
+        <label for="ppi">Resolution</label>
+        <div class="dim-inputs">
+          <span class="field"><input type="number" id="ppi" min="1" max="2400" step="1" value="300"><i>ppi</i></span>
+          <output class="derived" id="ppiNote">print</output>
+        </div>
+      </div>
+
+      <div class="quick-row" id="sizeQuick">
+        <button type="button" class="tiny" data-size="1080,1080,72">1080²</button>
+        <button type="button" class="tiny" data-size="1920,1080,72">1920×1080</button>
+        <button type="button" class="tiny" data-size="2550,3300,300">US Letter</button>
+        <button type="button" class="tiny" data-size="2480,3508,300">A4</button>
+        <button type="button" class="tiny" data-size="3600,3600,300">12″ square</button>
+      </div>
+      <p class="warn" id="sizeWarn" hidden></p>
+    </section>
+  </aside>
+
+  <!-- --------------------------------------------------------------- stage -->
+  <div class="right">
+    <section class="stage" aria-label="Preview">
+      <div class="mat" id="mat">
+        <div class="mat-corner"><span id="unitBadge">in</span></div>
+        <canvas class="ruler ruler-top" id="rulerTop"></canvas>
+        <canvas class="ruler ruler-left" id="rulerLeft"></canvas>
+        <div class="swatch-scroll" id="swatchScroll">
+          <div class="swatch" id="swatch" data-backdrop="checker">
+            <canvas id="preview"></canvas>
+          </div>
+        </div>
+      </div>
+
+      <div class="stage-foot">
+        <div class="caliper" id="caliper">
+          <svg class="caliper-mark" viewBox="0 0 60 12" preserveAspectRatio="none" aria-hidden="true">
+            <path d="M1 1 V11 M1 6 H59 M59 1 V11" fill="none" stroke="currentColor" stroke-width="1.4"/>
+          </svg>
+          <span id="caliperText">one repeat</span>
+        </div>
+
+        <div class="stage-tools">
+          <div class="seg" role="group" aria-label="Backdrop">
+            <button type="button" class="seg-btn is-on" data-backdrop="checker" title="Checkerboard">checker</button>
+            <button type="button" class="seg-btn" data-backdrop="mat" title="Cutting mat">mat</button>
+            <button type="button" class="seg-btn" data-backdrop="white" title="White">white</button>
+            <button type="button" class="seg-btn" data-backdrop="black" title="Black">black</button>
+          </div>
+          <div class="seg" role="group" aria-label="Zoom">
+            <button type="button" class="seg-btn is-on" data-zoom="fit">fit</button>
+            <button type="button" class="seg-btn" data-zoom="1">1:1</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ------------------------------------------------------------ export -->
+    <section class="panel export" aria-label="Export">
+      <h2 class="panel-head"><span class="eyebrow">cutting table</span>Export</h2>
+
+      <div class="export-grid" id="formatRow">
+        <button type="button" class="fmt" data-fmt="svg">
+          <b>SVG</b><span>vector, infinite scale</span>
+        </button>
+        <button type="button" class="fmt" data-fmt="png">
+          <b>PNG</b><span>keeps transparency</span>
+        </button>
+        <button type="button" class="fmt" data-fmt="webp">
+          <b>WEBP</b><span>alpha, smaller</span>
+        </button>
+        <button type="button" class="fmt" data-fmt="jpeg">
+          <b>JPEG</b><span>flattened on matte</span>
+        </button>
+        <button type="button" class="fmt" data-fmt="avif" hidden>
+          <b>AVIF</b><span>alpha, smallest</span>
+        </button>
+      </div>
+
+      <div class="export-opts">
+        <div class="opt">
+          <label for="quality">Quality</label>
+          <input type="range" id="quality" min="40" max="100" value="92">
+          <output class="num" id="qualityOut">92</output>
+        </div>
+        <div class="opt">
+          <label for="matteColor">JPEG matte</label>
+          <span class="swatch-chip small"><input type="color" id="matteColor" value="#ffffff" aria-label="JPEG matte color"></span>
+        </div>
+      </div>
+
+      <h3 class="sub-head">Take it somewhere else</h3>
+      <div class="export-grid secondary">
+        <button type="button" class="fmt alt" data-act="tile-png"><b>Seamless tile</b><span>one repeat, PNG</span></button>
+        <button type="button" class="fmt alt" data-act="tile-svg"><b>Seamless tile</b><span>one repeat, SVG</span></button>
+        <button type="button" class="fmt alt" data-act="css"><b>Copy CSS</b><span>background-image rule</span></button>
+        <button type="button" class="fmt alt" data-act="clipboard"><b>Copy image</b><span>PNG to clipboard</span></button>
+        <button type="button" class="fmt alt" data-act="link"><b>Copy link</b><span>the whole pattern in a URL</span></button>
+      </div>
+
+      <p class="footnote">
+        Nothing leaves your machine. Every pixel here is drawn by your browser —
+        there is no render server, and no image is ever uploaded.
+      </p>
+    </section>
+  </div>
+</main>
+
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script type="module" src="app.js"></script>
+</body>
+</html>
